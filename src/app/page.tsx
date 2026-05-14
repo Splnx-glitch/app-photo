@@ -36,6 +36,47 @@ function Petals() {
   );
 }
 
+const TRANSLATIONS = {
+  fr: {
+    title: "Bienvenue au mariage de",
+    names: "Lucie & Soufiane",
+    subtitle: "Partagez ces instants",
+    instruction: "Aidez-nous à capturer la magie ! Prenez une photo ou choisissez-en une dans votre galerie.",
+    takePhoto: "Prendre une photo",
+    uploadGallery: "Choisir dans la galerie",
+    uploadPhoto: "Envoyer la photo",
+    chooseAnother: "En choisir une autre",
+    uploading: "Envoi en cours...",
+    savingMemory: "Sauvegarde de votre magnifique souvenir...",
+    savingDrive: "Enregistrement...",
+    thankYou: "Merci !",
+    thankYouDesc: "Votre photo a bien été enregistrée. Nous sommes ravis que vous soyez là pour célébrer avec nous !",
+    viewAlbum: "Voir l'album partagé",
+    uploadAnother: "Envoyer une autre photo",
+    errorGeneric: "Une erreur s'est produite. Veuillez réessayer.",
+    errorNetwork: "Erreur réseau lors de l'envoi. Veuillez réessayer."
+  },
+  en: {
+    title: "Welcome to the wedding of",
+    names: "Lucie & Soufiane",
+    subtitle: "Share the Moments",
+    instruction: "Help us capture the magic! Take a photo or upload one from your gallery.",
+    takePhoto: "Take a Photo",
+    uploadGallery: "Upload from Gallery",
+    uploadPhoto: "Upload Photo",
+    chooseAnother: "Choose Another",
+    uploading: "Uploading...",
+    savingMemory: "Saving your beautiful memory...",
+    savingDrive: "Saving to Drive...",
+    thankYou: "Thank You!",
+    thankYouDesc: "Your photo has been saved. We're so grateful you're here to celebrate with us!",
+    viewAlbum: "View Shared Album",
+    uploadAnother: "Upload Another Photo",
+    errorGeneric: "Something went wrong. Please try again.",
+    errorNetwork: "Network error occurred during upload. Please try again."
+  }
+};
+
 // --- Main Page Component -----------------------------------
 export default function Home() {
   const [file, setFile] = useState<File | null>(null);
@@ -43,7 +84,9 @@ export default function Home() {
   const [screen, setScreen] = useState<Screen>("idle");
   const [error, setError] = useState<string | null>(null);
   const [uploadProgress, setUploadProgress] = useState(0);
-  const [uploadStatus, setUploadStatus] = useState("Uploading...");
+  const [lang, setLang] = useState<"fr" | "en">("fr");
+
+  const t = TRANSLATIONS[lang];
 
   const albumUrl = process.env.NEXT_PUBLIC_ALBUM_URL || "#";
 
@@ -85,7 +128,6 @@ export default function Home() {
     setScreen("uploading");
     setError(null);
     setUploadProgress(0);
-    setUploadStatus("Uploading...");
 
     const formData = new FormData();
     formData.append("file", file);
@@ -98,10 +140,6 @@ export default function Home() {
         const percentComplete = Math.round((event.loaded / event.total) * 100);
         // Cap the visual progress at 90% because the last 10% is the server talking to Google Drive
         setUploadProgress(Math.min(percentComplete, 90));
-        
-        if (percentComplete === 100) {
-          setUploadStatus("Processing...");
-        }
       }
     };
 
@@ -123,7 +161,7 @@ export default function Home() {
     };
 
     xhr.onerror = () => {
-      setError("Network error occurred during upload. Please try again.");
+      setError(t.errorNetwork);
       setScreen("preview");
     };
 
@@ -145,6 +183,16 @@ export default function Home() {
     <main className="relative flex flex-1 flex-col items-center justify-center px-5 py-10">
       <Petals />
 
+      {/* Language Toggle */}
+      <div className="absolute top-4 right-4 z-50">
+        <button 
+          onClick={() => setLang(lang === "fr" ? "en" : "fr")}
+          className="bg-white/80 backdrop-blur-md px-3 py-1.5 rounded-full text-xs font-semibold tracking-wider text-rose-500 shadow-sm border border-rose-100 hover:bg-rose-50 transition-colors"
+        >
+          {lang === "fr" ? "EN" : "FR"}
+        </button>
+      </div>
+
       <div className="relative z-10 w-full max-w-md mx-auto">
         {/* --- IDLE SCREEN ------------------------------- */}
         {screen === "idle" && (
@@ -156,20 +204,25 @@ export default function Home() {
                 style={{ color: "#f43f5e" }}
                 fill="#f43f5e"
               />
-              <h1
-                className="text-4xl font-light tracking-tight leading-tight mb-1"
+              <p
+                className="text-lg font-light tracking-[0.2em] uppercase text-rose-400 mb-4"
                 style={{ fontFamily: "var(--font-cormorant)" }}
               >
-                Our Wedding
+                {t.title}
+              </p>
+              <h1
+                className="text-5xl md:text-6xl font-medium tracking-tight leading-tight mb-4 italic"
+                style={{ fontFamily: "var(--font-playfair)" }}
+              >
+                {t.names}
               </h1>
-              <p className="ornament text-sm tracking-widest uppercase text-rose-400 font-medium mt-1">
-                Share the Moments
+              <p className="ornament text-sm tracking-[0.3em] uppercase text-[#7a5c4f] font-medium mt-2">
+                {t.subtitle}
               </p>
             </div>
 
             <p className="animate-fade-in-up-delay text-base text-[#7a5c4f] mt-4 mb-8 max-w-xs leading-relaxed">
-              Help us capture the magic! Take a photo or upload one from your
-              gallery.
+              {t.instruction}
             </p>
 
             {/* Action Buttons */}
@@ -187,7 +240,7 @@ export default function Home() {
                 />
                 <div className="btn-primary pointer-events-none">
                   <Camera className="w-5 h-5" />
-                  Take a Photo
+                  {t.takePhoto}
                 </div>
               </div>
 
@@ -203,7 +256,7 @@ export default function Home() {
                 />
                 <div className="btn-secondary pointer-events-none">
                   <ImagePlus className="w-5 h-5" />
-                  Upload from Gallery
+                  {t.uploadGallery}
                 </div>
               </div>
             </div>
@@ -235,14 +288,14 @@ export default function Home() {
                 className="btn-primary"
               >
                 <Upload className="w-5 h-5" />
-                Upload Photo
+                {t.uploadPhoto}
               </button>
               <button
                 id="retake-button"
                 onClick={handleReset}
                 className="btn-secondary"
               >
-                Choose Another
+                {t.chooseAnother}
               </button>
             </div>
           </div>
@@ -260,7 +313,7 @@ export default function Home() {
                 className="text-2xl font-light mb-4"
                 style={{ fontFamily: "var(--font-cormorant)" }}
               >
-                {uploadStatus}
+                {uploadProgress >= 90 ? t.savingDrive : t.uploading}
               </p>
               
               {/* Progress Bar Container */}
@@ -273,7 +326,7 @@ export default function Home() {
               
               <div className="flex justify-between w-full text-xs text-[#7a5c4f] font-medium px-1">
                 <span>{uploadProgress}%</span>
-                {uploadProgress >= 90 && <span className="animate-pulse">Saving to Drive...</span>}
+                {uploadProgress >= 90 && <span className="animate-pulse">{t.savingDrive}</span>}
               </div>
             </div>
           </div>
@@ -298,11 +351,10 @@ export default function Home() {
                 className="text-3xl font-light mb-2"
                 style={{ fontFamily: "var(--font-cormorant)" }}
               >
-                Thank You!
+                {t.thankYou}
               </h2>
               <p className="text-[#7a5c4f] mb-6 max-w-xs leading-relaxed">
-                Your photo has been saved. We&apos;re so grateful you&apos;re
-                here to celebrate with us!
+                {t.thankYouDesc}
               </p>
 
               {albumUrl !== "#" && (
@@ -313,7 +365,7 @@ export default function Home() {
                   className="btn-secondary mb-3"
                 >
                   <ExternalLink className="w-5 h-5" />
-                  View Shared Album
+                  {t.viewAlbum}
                 </a>
               )}
 
@@ -323,7 +375,7 @@ export default function Home() {
                 className="btn-primary"
               >
                 <Camera className="w-5 h-5" />
-                Upload Another Photo
+                {t.uploadAnother}
               </button>
             </div>
           </div>

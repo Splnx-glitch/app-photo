@@ -16,19 +16,20 @@ type Screen = "idle" | "preview" | "uploading" | "success";
 
 // --- Floating Petals (decorative) --------------------------
 function Petals() {
+  const colors = ["#b8d4e3", "#c4976a", "#8bbad0", "#d4b896", "#a8c5d6", "#d4b08a"];
   return (
     <div aria-hidden="true" className="pointer-events-none">
-      {Array.from({ length: 8 }).map((_, i) => (
+      {Array.from({ length: 22 }).map((_, i) => (
         <div
           key={i}
           className="petal"
           style={{
-            left: `${10 + i * 12}%`,
-            animationDuration: `${8 + i * 2.5}s`,
-            animationDelay: `${i * 1.2}s`,
-            background: i % 2 === 0 ? "#fda4af" : "#fecdd3",
-            width: `${8 + (i % 3) * 4}px`,
-            height: `${8 + (i % 3) * 4}px`,
+            left: `${(i * 4.5) % 100}%`,
+            animationDuration: `${5 + (i % 7) * 2}s`,
+            animationDelay: `${i * 0.4}s`,
+            background: colors[i % colors.length],
+            width: `${6 + (i % 5) * 3}px`,
+            height: `${6 + (i % 5) * 3}px`,
           }}
         />
       ))}
@@ -40,19 +41,19 @@ const TRANSLATIONS = {
   fr: {
     title: "Bienvenue au mariage de",
     names: "Lucie & Soufiane",
-    subtitle: "Partagez ces instants",
-    instruction: "Aidez-nous à capturer la magie ! Prenez une photo ou choisissez-en une dans votre galerie.",
+    subtitle: "Capturez ces instants",
+    instruction: "Aidez-nous à immortaliser cette journée ! Prenez une photo ou choisissez-en une depuis votre galerie.",
     takePhoto: "Prendre une photo",
-    uploadGallery: "Choisir dans la galerie",
+    uploadGallery: "Choisir depuis la galerie",
     uploadPhoto: "Envoyer la photo",
     chooseAnother: "En choisir une autre",
     uploading: "Envoi en cours...",
     savingMemory: "Sauvegarde de votre magnifique souvenir...",
     savingDrive: "Enregistrement...",
     thankYou: "Merci !",
-    thankYouDesc: "Votre photo a bien été enregistrée. Nous sommes ravis que vous soyez là pour célébrer avec nous !",
+    thankYouDesc: "Votre photo a bien été enregistrée. Merci d'être là pour célébrer avec nous !",
     viewAlbum: "Voir l'album partagé",
-    uploadAnother: "Envoyer une autre photo",
+    uploadAnother: "Ajouter une autre photo",
     errorGeneric: "Une erreur s'est produite. Veuillez réessayer.",
     errorNetwork: "Erreur réseau lors de l'envoi. Veuillez réessayer."
   },
@@ -187,7 +188,8 @@ export default function Home() {
       <div className="absolute top-4 right-4 z-50">
         <button 
           onClick={() => setLang(lang === "fr" ? "en" : "fr")}
-          className="bg-white/80 backdrop-blur-md px-3 py-1.5 rounded-full text-xs font-semibold tracking-wider text-rose-500 shadow-sm border border-rose-100 hover:bg-rose-50 transition-colors"
+          className="bg-white/80 backdrop-blur-md px-3 py-1.5 rounded-full text-xs font-semibold tracking-wider shadow-sm border transition-colors"
+          style={{ color: "#2c4a6e", borderColor: "#b8d4e3" }}
         >
           {lang === "fr" ? "EN" : "FR"}
         </button>
@@ -201,27 +203,27 @@ export default function Home() {
             <div className="animate-fade-in-up mb-2">
               <Heart
                 className="w-10 h-10 mx-auto mb-4"
-                style={{ color: "#f43f5e" }}
-                fill="#f43f5e"
+                style={{ color: "#c4976a" }}
+                fill="#c4976a"
               />
               <p
-                className="text-lg font-light tracking-[0.2em] uppercase text-rose-400 mb-4"
-                style={{ fontFamily: "var(--font-cormorant)" }}
+                className="text-base font-light tracking-[0.2em] uppercase mb-4"
+                style={{ fontFamily: "var(--font-cormorant)", color: "#5b8ba8" }}
               >
                 {t.title}
               </p>
               <h1
                 className="text-5xl md:text-6xl font-medium tracking-tight leading-tight mb-4 italic"
-                style={{ fontFamily: "var(--font-playfair)" }}
+                style={{ fontFamily: "var(--font-playfair)", color: "#2c4a6e" }}
               >
                 {t.names}
               </h1>
-              <p className="ornament text-sm tracking-[0.3em] uppercase text-[#7a5c4f] font-medium mt-2">
+              <p className="ornament text-sm tracking-[0.3em] uppercase font-medium mt-2" style={{ color: "#a37b52" }}>
                 {t.subtitle}
               </p>
             </div>
 
-            <p className="animate-fade-in-up-delay text-base text-[#7a5c4f] mt-4 mb-8 max-w-xs leading-relaxed">
+            <p className="animate-fade-in-up-delay text-base mt-4 mb-8 max-w-xs leading-relaxed" style={{ color: "#4a5e6d" }}>
               {t.instruction}
             </p>
 
@@ -307,24 +309,24 @@ export default function Home() {
             <div className="card-glass p-8 w-full flex flex-col items-center">
               <Loader2
                 className="w-10 h-10 animate-spin mb-4"
-                style={{ color: "#f43f5e" }}
+                style={{ color: "#5b8ba8" }}
               />
               <p
                 className="text-2xl font-light mb-4"
-                style={{ fontFamily: "var(--font-cormorant)" }}
+                style={{ fontFamily: "var(--font-cormorant)", color: "#2c4a6e" }}
               >
                 {uploadProgress >= 90 ? t.savingDrive : t.uploading}
               </p>
               
               {/* Progress Bar Container */}
-              <div className="w-full bg-rose-100 rounded-full h-3 mb-2 overflow-hidden relative">
+              <div className="w-full rounded-full h-3 mb-2 overflow-hidden relative" style={{ background: "#dae8f0" }}>
                 <div 
-                  className="bg-rose-500 h-3 rounded-full transition-all duration-300 ease-out absolute left-0 top-0"
-                  style={{ width: `${uploadProgress}%` }}
+                  className="h-3 rounded-full transition-all duration-300 ease-out absolute left-0 top-0"
+                  style={{ width: `${uploadProgress}%`, background: "linear-gradient(90deg, #5b8ba8, #2c4a6e)" }}
                 ></div>
               </div>
               
-              <div className="flex justify-between w-full text-xs text-[#7a5c4f] font-medium px-1">
+              <div className="flex justify-between w-full text-xs font-medium px-1" style={{ color: "#4a5e6d" }}>
                 <span>{uploadProgress}%</span>
                 {uploadProgress >= 90 && <span className="animate-pulse">{t.savingDrive}</span>}
               </div>
@@ -339,21 +341,21 @@ export default function Home() {
               <div className="relative mb-5">
                 <CheckCircle2
                   className="w-16 h-16"
-                  style={{ color: "#16a34a" }}
-                  fill="rgba(22, 163, 74, 0.1)"
+                  style={{ color: "#5b8ba8" }}
+                  fill="rgba(91, 139, 168, 0.1)"
                 />
                 <PartyPopper
                   className="w-6 h-6 absolute -top-1 -right-1"
-                  style={{ color: "#d4a853" }}
+                  style={{ color: "#c4976a" }}
                 />
               </div>
               <h2
                 className="text-3xl font-light mb-2"
-                style={{ fontFamily: "var(--font-cormorant)" }}
+                style={{ fontFamily: "var(--font-cormorant)", color: "#2c4a6e" }}
               >
                 {t.thankYou}
               </h2>
-              <p className="text-[#7a5c4f] mb-6 max-w-xs leading-relaxed">
+              <p className="mb-6 max-w-xs leading-relaxed" style={{ color: "#4a5e6d" }}>
                 {t.thankYouDesc}
               </p>
 

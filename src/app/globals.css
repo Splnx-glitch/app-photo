@@ -1,30 +1,31 @@
 @import "tailwindcss";
 
 @theme inline {
-  /* Rose palette */
-  --color-rose-50: #fff1f2;
-  --color-rose-100: #ffe4e6;
-  --color-rose-200: #fecdd3;
-  --color-rose-300: #fda4af;
-  --color-rose-400: #fb7185;
-  --color-rose-500: #f43f5e;
-  --color-rose-600: #e11d48;
-  --color-rose-700: #be123c;
+  /* Blue palette — inspired by invitation's Moroccan tiles */
+  --color-blue-50: #f0f5f8;
+  --color-blue-100: #dae8f0;
+  --color-blue-200: #b8d4e3;
+  --color-blue-300: #8bbad0;
+  --color-blue-400: #5b8ba8;
+  --color-blue-500: #3d6f8e;
+  --color-blue-600: #2c4a6e;
+  --color-blue-700: #1e3550;
 
-  /* Gold accents */
-  --color-gold-100: #fef3c7;
-  --color-gold-200: #fde68a;
-  --color-gold-300: #fcd34d;
-  --color-gold-400: #d4a853;
-  --color-gold-500: #b8860b;
+  /* Gold / warm tan — from invitation florals */
+  --color-gold-100: #f5ebe0;
+  --color-gold-200: #e8d5c0;
+  --color-gold-300: #d4b896;
+  --color-gold-400: #c4976a;
+  --color-gold-500: #a37b52;
+  --color-gold-600: #7a5c3e;
 
-  /* Cream / warm whites */
-  --color-cream-50: #fefcf8;
-  --color-cream-100: #fdf8ef;
-  --color-cream-200: #faf0dc;
+  /* Cream / warm whites — invitation background */
+  --color-cream-50: #faf8f5;
+  --color-cream-100: #f5f0eb;
+  --color-cream-200: #ede4db;
 
   /* Fonts */
-  --font-heading: var(--font-cormorant);
+  --font-heading: var(--font-playfair);
   --font-body: var(--font-inter);
 }
 
@@ -40,13 +41,13 @@ body {
   display: flex;
   flex-direction: column;
   font-family: var(--font-body), system-ui, sans-serif;
-  color: #4a3728;
+  color: #2c3e50;
   background: linear-gradient(
     168deg,
-    #fefcf8 0%,
-    #fff1f2 40%,
-    #ffe4e6 70%,
-    #fecdd3 100%
+    #faf8f5 0%,
+    #f0f5f8 35%,
+    #e8eff4 60%,
+    #f5f0eb 100%
   );
   background-attachment: fixed;
 }
@@ -64,7 +65,7 @@ body {
   width: 12px;
   height: 12px;
   border-radius: 50% 0 50% 0;
-  opacity: 0.18;
+  opacity: 0.2;
   pointer-events: none;
   z-index: 0;
   animation: petal-fall linear infinite;
@@ -76,10 +77,10 @@ body {
     opacity: 0;
   }
   10% {
-    opacity: 0.18;
+    opacity: 0.2;
   }
   90% {
-    opacity: 0.18;
+    opacity: 0.2;
   }
   100% {
     transform: translateY(100vh) rotate(360deg);
@@ -101,9 +102,9 @@ body {
   font-size: 1.075rem;
   letter-spacing: 0.01em;
   color: white;
-  background: linear-gradient(135deg, #f43f5e 0%, #e11d48 100%);
+  background: linear-gradient(135deg, #5b8ba8 0%, #2c4a6e 100%);
   box-shadow:
-    0 4px 14px rgba(244, 63, 94, 0.35),
+    0 4px 14px rgba(44, 74, 110, 0.3),
     0 1px 3px rgba(0, 0, 0, 0.08);
   transition: all 0.2s ease;
   cursor: pointer;
@@ -112,7 +113,7 @@ body {
 
 .btn-primary:active {
   transform: scale(0.97);
-  box-shadow: 0 2px 8px rgba(244, 63, 94, 0.25);
+  box-shadow: 0 2px 8px rgba(44, 74, 110, 0.25);
 }
 
 .btn-secondary {
@@ -126,9 +127,9 @@ body {
   font-weight: 600;
   font-size: 1.075rem;
   letter-spacing: 0.01em;
-  color: #be123c;
+  color: #2c4a6e;
   background: rgba(255, 255, 255, 0.75);
-  border: 2px solid #fecdd3;
+  border: 2px solid #b8d4e3;
   backdrop-filter: blur(8px);
   -webkit-backdrop-filter: blur(8px);
   transition: all 0.2s ease;
@@ -142,13 +143,13 @@ body {
 }
 
 .card-glass {
-  background: rgba(255, 255, 255, 0.6);
+  background: rgba(255, 255, 255, 0.65);
   backdrop-filter: blur(16px);
   -webkit-backdrop-filter: blur(16px);
   border: 1px solid rgba(255, 255, 255, 0.7);
   border-radius: 1.5rem;
   box-shadow:
-    0 8px 32px rgba(190, 18, 60, 0.06),
+    0 8px 32px rgba(44, 74, 110, 0.06),
     0 1px 4px rgba(0, 0, 0, 0.04);
 }
 
@@ -207,7 +208,7 @@ body {
 .ornament::after {
   content: "✦";
   margin: 0 0.75rem;
-  color: #d4a853;
+  color: #c4976a;
   font-size: 0.5rem;
   vertical-align: middle;
 }

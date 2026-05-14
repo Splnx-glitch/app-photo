@@ -1,6 +1,20 @@
 import type { Metadata, Viewport } from "next";
-import { Cormorant_Garamond, Playfair_Display, Inter } from "next/font/google";
+import { Cormorant_Garamond, Playfair_Display, Inter, Amiri, Aref_Ruqaa } from "next/font/google";
 import "./globals.css";
+
+const arefRuqaa = Aref_Ruqaa({
+  subsets: ["latin", "arabic"],
+  weight: ["400", "700"],
+  variable: "--font-aref",
+  display: "swap",
+});
+
+const amiri = Amiri({
+  subsets: ["latin", "arabic"],
+  weight: ["400", "700"],
+  variable: "--font-amiri",
+  display: "swap",
+});
 
 const playfair = Playfair_Display({
   subsets: ["latin"],
@@ -45,7 +59,7 @@ export default function RootLayout({
   return (
     <html
       lang="fr"
-      className={`${playfair.variable} ${cormorant.variable} ${inter.variable} h-full`}
+      className={`${playfair.variable} ${cormorant.variable} ${inter.variable} ${amiri.variable} ${arefRuqaa.variable} h-full`}
     >
       <body className="min-h-full flex flex-col antialiased">{children}</body>
     </html>

@@ -75,6 +75,25 @@ const TRANSLATIONS = {
     uploadAnother: "Upload Another Photo",
     errorGeneric: "Something went wrong. Please try again.",
     errorNetwork: "Network error occurred during upload. Please try again."
+  },
+  ar: {
+    title: "أهلاً بكم في زفاف",
+    names: "لوسي وسفيان",
+    subtitle: "خلدوا هذه اللحظات",
+    instruction: "ساعدونا في تخليد هذه اللحظات! التقطوا صورة أو اختاروا واحدة من معرض الصور الخاص بكم.",
+    takePhoto: "التقاط صورة",
+    uploadGallery: "اختر من المعرض",
+    uploadPhoto: "إرسال الصورة",
+    chooseAnother: "اختر صورة أخرى",
+    uploading: "جاري الإرسال...",
+    savingMemory: "جاري حفظ ذكرياتكم الجميلة...",
+    savingDrive: "جاري الحفظ...",
+    thankYou: "شكراً لكم!",
+    thankYouDesc: "لقد تم حفظ صورتكم. شكراً لتواجدكم معنا للاحتفال!",
+    viewAlbum: "مشاهدة الألبوم المشترك",
+    uploadAnother: "إضافة صورة أخرى",
+    errorGeneric: "حدث خطأ ما. يرجى المحاولة مرة أخرى.",
+    errorNetwork: "خطأ في الشبكة أثناء الإرسال. يرجى المحاولة مرة أخرى."
   }
 };
 
@@ -85,9 +104,10 @@ export default function Home() {
   const [screen, setScreen] = useState<Screen>("idle");
   const [error, setError] = useState<string | null>(null);
   const [uploadProgress, setUploadProgress] = useState(0);
-  const [lang, setLang] = useState<"fr" | "en">("fr");
+  const [lang, setLang] = useState<"fr" | "en" | "ar">("fr");
 
   const t = TRANSLATIONS[lang];
+  const isRtl = lang === "ar";
 
   const albumUrl = process.env.NEXT_PUBLIC_ALBUM_URL || "#";
 
@@ -185,17 +205,21 @@ export default function Home() {
       <Petals />
 
       {/* Language Toggle */}
-      <div className="absolute top-4 right-4 z-50">
-        <button 
-          onClick={() => setLang(lang === "fr" ? "en" : "fr")}
-          className="bg-white/80 backdrop-blur-md px-3 py-1.5 rounded-full text-xs font-semibold tracking-wider shadow-sm border transition-colors"
-          style={{ color: "#2c4a6e", borderColor: "#b8d4e3" }}
-        >
-          {lang === "fr" ? "EN" : "FR"}
-        </button>
+      <div className="absolute top-4 right-4 z-50 flex gap-2">
+        {["fr", "en", "ar"].map((l) => (
+          <button
+            key={l}
+            onClick={() => setLang(l as any)}
+            className={`bg-white/80 backdrop-blur-md px-3 py-1 rounded-full text-[10px] font-bold tracking-wider shadow-sm border transition-all ${
+              lang === l ? "border-blue-400 text-blue-600 scale-110" : "border-gray-100 text-gray-400 opacity-60"
+            }`}
+          >
+            {l.toUpperCase()}
+          </button>
+        ))}
       </div>
 
-      <div className="relative z-10 w-full max-w-md mx-auto">
+      <div className="relative z-10 w-full max-w-md mx-auto" dir={isRtl ? "rtl" : "ltr"}>
         {/* --- IDLE SCREEN ------------------------------- */}
         {screen === "idle" && (
           <div className="flex flex-col items-center text-center">
@@ -207,58 +231,66 @@ export default function Home() {
                 fill="#c4976a"
               />
               <p
-                className="text-base font-light tracking-[0.2em] uppercase mb-4"
-                style={{ fontFamily: "var(--font-cormorant)", color: "#5b8ba8" }}
+                className={`${isRtl ? "text-xl md:text-2xl" : "text-lg"} font-light uppercase mb-4 ${isRtl ? "" : "tracking-[0.2em]"}`}
+                style={{ 
+                  fontFamily: isRtl ? "var(--font-amiri)" : "var(--font-cormorant)", 
+                  color: "#5b8ba8" 
+                }}
               >
                 {t.title}
               </p>
               <h1
-                className="text-5xl md:text-6xl font-medium tracking-tight leading-tight mb-4 italic"
-                style={{ fontFamily: "var(--font-playfair)", color: "#2c4a6e" }}
+                className={`${isRtl ? "text-7xl md:text-8xl" : "text-6xl md:text-7xl"} font-medium leading-tight mb-4 ${isRtl ? "" : "italic tracking-tight"}`}
+                style={{ 
+                  fontFamily: isRtl ? "var(--font-aref)" : "var(--font-playfair)", 
+                  color: "#2c4a6e" 
+                }}
               >
                 {t.names}
               </h1>
-              <p className="ornament text-sm tracking-[0.3em] uppercase font-medium mt-2" style={{ color: "#a37b52" }}>
+              <p className={`ornament ${isRtl ? "text-lg" : "text-sm"} uppercase font-medium mt-2 ${isRtl ? "" : "tracking-[0.3em]"}`} style={{ color: "#a37b52", fontFamily: isRtl ? "var(--font-amiri)" : "inherit" }}>
                 {t.subtitle}
               </p>
             </div>
 
-            <p className="animate-fade-in-up-delay text-base mt-4 mb-8 max-w-xs leading-relaxed" style={{ color: "#4a5e6d" }}>
-              {t.instruction}
-            </p>
+            <div className="mt-10 space-y-8 flex flex-col items-center w-full">
+              <p className={`${isRtl ? "text-2xl" : "text-base"} text-gray-600 font-light leading-relaxed max-w-[300px] mx-auto`} style={{ fontFamily: isRtl ? "var(--font-amiri)" : "inherit" }}>
+                {t.instruction}
+              </p>
 
-            {/* Action Buttons */}
-            <div className="animate-fade-in-up-delay-2 w-full flex flex-col gap-4">
-              {/* Take a Photo */}
-              <div className="relative w-full overflow-hidden rounded-full">
-                <input
-                  id="camera-input"
-                  type="file"
-                  accept="image/*"
-                  capture="environment"
-                  onChange={handleFileChange}
-                  className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
-                  style={{ fontSize: "200px" }}
-                />
-                <div className="btn-primary pointer-events-none">
-                  <Camera className="w-5 h-5" />
-                  {t.takePhoto}
+              {/* Action Buttons */}
+              <div className="animate-fade-in-up-delay-2 w-full flex flex-col gap-4">
+                {/* Take a Photo */}
+                <div className="relative w-full overflow-hidden rounded-full">
+                  <input
+                    id="camera-input"
+                    type="file"
+                    accept="image/*"
+                    capture="environment"
+                    onChange={handleFileChange}
+                    className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
+                    style={{ fontSize: "200px" }}
+                  />
+                  <div className="btn-primary pointer-events-none">
+                    <Camera className="w-5 h-5" />
+                    {t.takePhoto}
+                  </div>
                 </div>
-              </div>
 
-              {/* Upload from Gallery */}
-              <div className="relative w-full overflow-hidden rounded-full">
-                <input
-                  id="gallery-input"
-                  type="file"
-                  accept="image/*"
-                  onChange={handleFileChange}
-                  className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
-                  style={{ fontSize: "200px" }}
-                />
-                <div className="btn-secondary pointer-events-none">
-                  <ImagePlus className="w-5 h-5" />
-                  {t.uploadGallery}
+                {/* Upload from Gallery */}
+                <div className="relative w-full overflow-hidden rounded-full">
+                  <input
+                    id="gallery-input"
+                    type="file"
+                    accept="image/*"
+                    onChange={handleFileChange}
+                    className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
+                    style={{ fontSize: "200px" }}
+                  />
+                  <div className="btn-secondary pointer-events-none">
+                    <ImagePlus className="w-5 h-5" />
+                    {t.uploadGallery}
+                  </div>
                 </div>
               </div>
             </div>

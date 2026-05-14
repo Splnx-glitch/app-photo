@@ -14,12 +14,15 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: "Server configuration error: APPS_SCRIPT_URL missing" }, { status: 500 });
     }
 
-    // 1. Lire le fichier en buffer
+    // 1. Lire les données
+    const guestName = formData.get("guestName") as string || "";
     const buffer = await file.arrayBuffer();
     
-    // 2. Générer un nom de fichier unique (GUID/UUID)
+    // 2. Générer un nom de fichier unique (Name_GUID.ext)
     const extension = file.name.split(".").pop() || "jpg";
-    const uniqueFileName = `${crypto.randomUUID()}.${extension}`;
+    const guid = crypto.randomUUID();
+    const safeName = guestName.replace(/[^a-z0-9]/gi, "_").substring(0, 50);
+    const uniqueFileName = `${safeName ? safeName + "_" : ""}${guid}.${extension}`;
 
     // 3. Convertir en Base64 pour l'Apps Script
     const base64 = Buffer.from(buffer).toString("base64");

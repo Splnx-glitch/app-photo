@@ -55,7 +55,9 @@ const TRANSLATIONS = {
     viewAlbum: "Voir l'album partagé",
     uploadAnother: "Ajouter une autre photo",
     errorGeneric: "Une erreur s'est produite. Veuillez réessayer.",
-    errorNetwork: "Erreur réseau lors de l'envoi. Veuillez réessayer."
+    errorNetwork: "Erreur réseau lors de l'envoi. Veuillez réessayer.",
+    nameLabel: "Votre nom (optionnel)",
+    namePlaceholder: "Entrez votre nom..."
   },
   en: {
     title: "Welcome to the wedding of",
@@ -74,7 +76,9 @@ const TRANSLATIONS = {
     viewAlbum: "View Shared Album",
     uploadAnother: "Upload Another Photo",
     errorGeneric: "Something went wrong. Please try again.",
-    errorNetwork: "Network error occurred during upload. Please try again."
+    errorNetwork: "Network error occurred during upload. Please try again.",
+    nameLabel: "Your Name (optional)",
+    namePlaceholder: "Enter your name..."
   },
   ar: {
     title: "أهلاً بكم في زفاف",
@@ -93,7 +97,9 @@ const TRANSLATIONS = {
     viewAlbum: "مشاهدة الألبوم المشترك",
     uploadAnother: "إضافة صورة أخرى",
     errorGeneric: "حدث خطأ ما. يرجى المحاولة مرة أخرى.",
-    errorNetwork: "خطأ في الشبكة أثناء الإرسال. يرجى المحاولة مرة أخرى."
+    errorNetwork: "خطأ في الشبكة أثناء الإرسال. يرجى المحاولة مرة أخرى.",
+    nameLabel: "اسمك (اختياري)",
+    namePlaceholder: "أدخل اسمك هنا..."
   }
 };
 
@@ -105,8 +111,18 @@ export default function Home() {
   const [error, setError] = useState<string | null>(null);
   const [uploadProgress, setUploadProgress] = useState(0);
   const [lang, setLang] = useState<"fr" | "en" | "ar">("fr");
+  const [guestName, setGuestName] = useState("");
 
-  const t = TRANSLATIONS[lang];
+  useEffect(() => {
+    const savedName = localStorage.getItem("wedding_guest_name");
+    if (savedName) setGuestName(savedName);
+  }, []);
+
+  useEffect(() => {
+    localStorage.setItem("wedding_guest_name", guestName);
+  }, [guestName]);
+
+  const t = (TRANSLATIONS as any)[lang];
   const isRtl = lang === "ar";
 
   const albumUrl = process.env.NEXT_PUBLIC_ALBUM_URL || "#";
@@ -152,6 +168,7 @@ export default function Home() {
 
     const formData = new FormData();
     formData.append("file", file);
+    formData.append("guestName", guestName);
 
     const xhr = new XMLHttpRequest();
     xhr.open("POST", "/api/upload", true);
@@ -254,6 +271,20 @@ export default function Home() {
             </div>
 
             <div className="mt-10 space-y-8 flex flex-col items-center w-full">
+              <div className="w-full max-w-[280px] space-y-2 text-center">
+                <label className="text-xs font-semibold uppercase tracking-wider text-blue-800/60 block" style={{ fontFamily: isRtl ? "var(--font-amiri)" : "inherit" }}>
+                  {(t as any).nameLabel}
+                </label>
+                <input
+                  type="text"
+                  value={guestName}
+                  onChange={(e) => setGuestName(e.target.value)}
+                  placeholder={(t as any).namePlaceholder}
+                  className="w-full bg-white/50 border border-blue-100 rounded-xl px-4 py-3 text-center focus:outline-none focus:ring-2 focus:ring-blue-200 transition-all placeholder:text-blue-300 text-blue-900"
+                  style={{ fontFamily: isRtl ? "var(--font-amiri)" : "inherit" }}
+                />
+              </div>
+
               <p className={`${isRtl ? "text-2xl" : "text-base"} text-gray-600 font-light leading-relaxed max-w-[300px] mx-auto`} style={{ fontFamily: isRtl ? "var(--font-amiri)" : "inherit" }}>
                 {t.instruction}
               </p>

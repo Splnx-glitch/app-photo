@@ -42,6 +42,8 @@ export default function Home() {
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
   const [screen, setScreen] = useState<Screen>("idle");
   const [error, setError] = useState<string | null>(null);
+  const [uploadProgress, setUploadProgress] = useState(0);
+  const [uploadStatus, setUploadStatus] = useState("Uploading...");
 
   const albumUrl = process.env.NEXT_PUBLIC_ALBUM_URL || "#";
 
@@ -77,34 +79,55 @@ export default function Home() {
   );
 
   // --- Upload handler -----------------------------------
-  const handleUpload = useCallback(async () => {
+  const handleUpload = useCallback(() => {
     if (!file) return;
 
     setScreen("uploading");
     setError(null);
+    setUploadProgress(0);
+    setUploadStatus("Uploading...");
 
-    try {
-      const formData = new FormData();
-      formData.append("file", file);
+    const formData = new FormData();
+    formData.append("file", file);
 
-      const res = await fetch("/api/upload", {
-        method: "POST",
-        body: formData,
-      });
+    const xhr = new XMLHttpRequest();
+    xhr.open("POST", "/api/upload", true);
 
-      if (!res.ok) {
-        const data = await res.json().catch(() => ({}));
-        throw new Error(data.error || `Upload failed (${res.status})`);
+    xhr.upload.onprogress = (event) => {
+      if (event.lengthComputable) {
+        const percentComplete = Math.round((event.loaded / event.total) * 100);
+        // Cap the visual progress at 90% because the last 10% is the server talking to Google Drive
+        setUploadProgress(Math.min(percentComplete, 90));
+        
+        if (percentComplete === 100) {
+          setUploadStatus("Processing...");
+        }
       }
+    };
 
-      // Success!
-      setScreen("success");
-    } catch (err) {
-      setError(
-        err instanceof Error ? err.message : "Something went wrong. Please try again."
-      );
+    xhr.onload = () => {
+      if (xhr.status >= 200 && xhr.status < 300) {
+        setUploadProgress(100);
+        setTimeout(() => setScreen("success"), 500); // Small delay for visual completion
+      } else {
+        let errorMessage = `Upload failed (${xhr.status})`;
+        try {
+          const res = JSON.parse(xhr.responseText);
+          errorMessage = res.error || errorMessage;
+        } catch (e) {
+          // ignore parsing error
+        }
+        setError(errorMessage);
+        setScreen("preview");
+      }
+    };
+
+    xhr.onerror = () => {
+      setError("Network error occurred during upload. Please try again.");
       setScreen("preview");
-    }
+    };
+
+    xhr.send(formData);
   }, [file]);
 
   // --- Reset for a new photo ----------------------------
@@ -228,20 +251,30 @@ export default function Home() {
         {/* --- UPLOADING SCREEN -------------------------- */}
         {screen === "uploading" && (
           <div className="flex flex-col items-center text-center animate-fade-in-up">
-            <div className="card-glass p-10 w-full flex flex-col items-center">
+            <div className="card-glass p-8 w-full flex flex-col items-center">
               <Loader2
-                className="w-12 h-12 animate-spin mb-5"
+                className="w-10 h-10 animate-spin mb-4"
                 style={{ color: "#f43f5e" }}
               />
               <p
-                className="text-2xl font-light mb-2"
+                className="text-2xl font-light mb-4"
                 style={{ fontFamily: "var(--font-cormorant)" }}
               >
-                Uploading...
+                {uploadStatus}
               </p>
-              <p className="text-sm text-[#7a5c4f] animate-pulse-soft">
-                Saving your beautiful memory
-              </p>
+              
+              {/* Progress Bar Container */}
+              <div className="w-full bg-rose-100 rounded-full h-3 mb-2 overflow-hidden relative">
+                <div 
+                  className="bg-rose-500 h-3 rounded-full transition-all duration-300 ease-out absolute left-0 top-0"
+                  style={{ width: `${uploadProgress}%` }}
+                ></div>
+              </div>
+              
+              <div className="flex justify-between w-full text-xs text-[#7a5c4f] font-medium px-1">
+                <span>{uploadProgress}%</span>
+                {uploadProgress >= 90 && <span className="animate-pulse">Saving to Drive...</span>}
+              </div>
             </div>
           </div>
         )}

@@ -10,7 +10,64 @@ import {
   Heart,
   PartyPopper,
   ExternalLink,
+  X,
+  Languages,
+  Sparkles
 } from "lucide-react";
+
+// --- Compression Helper ------------------------------------
+const compressImage = (file: File): Promise<File> => {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.readAsDataURL(file);
+    reader.onload = (e) => {
+      const img = new Image();
+      img.src = e.target?.result as string;
+      img.onload = () => {
+        const canvas = document.createElement("canvas");
+        const MAX_WIDTH = 2560;
+        const MAX_HEIGHT = 2560;
+        let width = img.width;
+        let height = img.height;
+
+        if (width > height) {
+          if (width > MAX_WIDTH) {
+            height *= MAX_WIDTH / width;
+            width = MAX_WIDTH;
+          }
+        } else {
+          if (height > MAX_HEIGHT) {
+            width *= MAX_HEIGHT / height;
+            height = MAX_HEIGHT;
+          }
+        }
+
+        canvas.width = width;
+        canvas.height = height;
+        const ctx = canvas.getContext("2d");
+        ctx?.drawImage(img, 0, 0, width, height);
+
+        canvas.toBlob(
+          (blob) => {
+            if (blob) {
+              const compressedFile = new File([blob], file.name, {
+                type: "image/jpeg",
+                lastModified: Date.now(),
+              });
+              resolve(compressedFile);
+            } else {
+              reject(new Error("Compression failed"));
+            }
+          },
+          "image/jpeg",
+          0.85
+        );
+      };
+      img.onerror = reject;
+    };
+    reader.onerror = reject;
+  });
+};
 
 type Screen = "idle" | "preview" | "uploading" | "success";
 
@@ -110,6 +167,9 @@ export default function Home() {
   const [screen, setScreen] = useState<Screen>("idle");
   const [error, setError] = useState<string | null>(null);
   const [uploadProgress, setUploadProgress] = useState(0);
+  const [files, setFiles] = useState<File[]>([]);
+  const [currentUploadIndex, setCurrentUploadIndex] = useState(0);
+  const [isProcessing, setIsProcessing] = useState(false);
   const [lang, setLang] = useState<"fr" | "en" | "ar">("fr");
   const [guestName, setGuestName] = useState("");
 
@@ -137,81 +197,98 @@ export default function Home() {
   }, [previewUrl]);
 
   // --- File selection handler ----------------------------
-  const handleFileChange = useCallback(
-    (e: React.ChangeEvent<HTMLInputElement>) => {
-      const selectedFile = e.target.files?.[0];
-      if (!selectedFile) return;
+  const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const selectedFiles = e.target.files;
+    if (!selectedFiles || selectedFiles.length === 0) return;
 
-      // Revoke previous preview URL if any
-      if (previewUrl) {
-        URL.revokeObjectURL(previewUrl);
-      }
-
-      setFile(selectedFile);
-      setPreviewUrl(URL.createObjectURL(selectedFile));
-      setError(null);
+    setIsProcessing(true);
+    setError(null);
+    
+    try {
+      const filesArray = Array.from(selectedFiles);
+      // Compress all images in parallel
+      const compressedFiles = await Promise.all(
+        filesArray.map(f => compressImage(f))
+      );
+      
+      setFiles(compressedFiles);
+      
+      // Preview first compressed image
+      const url = URL.createObjectURL(compressedFiles[0]);
+      setPreviewUrl(url);
       setScreen("preview");
-
-      // Reset the input so the same file can be re-selected
+      setUploadProgress(0);
+    } catch (err) {
+      console.error("Compression error:", err);
+      setError(lang === 'ar' ? 'فشل معالجة الصور' : (lang === 'fr' ? 'Erreur lors du traitement des images' : 'Error processing images'));
+    } finally {
+      setIsProcessing(false);
+      // Reset input
       e.target.value = "";
-    },
-    [previewUrl]
-  );
+    }
+  };
 
   // --- Upload handler -----------------------------------
-  const handleUpload = useCallback(() => {
-    if (!file) return;
-
+  const handleUpload = async () => {
+    if (files.length === 0) return;
     setScreen("uploading");
-    setError(null);
     setUploadProgress(0);
 
-    const formData = new FormData();
-    formData.append("file", file);
-    formData.append("guestName", guestName);
+    for (let i = 0; i < files.length; i++) {
+      setCurrentUploadIndex(i);
+      const file = files[i];
+      
+      try {
+        await new Promise((resolve, reject) => {
+          const formData = new FormData();
+          formData.append("file", file);
+          formData.append("guestName", guestName);
 
-    const xhr = new XMLHttpRequest();
-    xhr.open("POST", "/api/upload", true);
+          const xhr = new XMLHttpRequest();
+          xhr.open("POST", "/api/upload", true);
 
-    xhr.upload.onprogress = (event) => {
-      if (event.lengthComputable) {
-        const percentComplete = Math.round((event.loaded / event.total) * 100);
-        // Cap the visual progress at 90% because the last 10% is the server talking to Google Drive
-        setUploadProgress(Math.min(percentComplete, 90));
-      }
-    };
+          xhr.upload.onprogress = (event) => {
+            if (event.lengthComputable) {
+              // Calculate global progress
+              const fileProgress = (event.loaded / event.total) * 100;
+              const globalProgress = ((i * 100) + fileProgress) / files.length;
+              setUploadProgress(globalProgress);
+            }
+          };
 
-    xhr.onload = () => {
-      if (xhr.status >= 200 && xhr.status < 300) {
-        setUploadProgress(100);
-        setTimeout(() => setScreen("success"), 500); // Small delay for visual completion
-      } else {
-        let errorMessage = `Upload failed (${xhr.status})`;
-        try {
-          const res = JSON.parse(xhr.responseText);
-          errorMessage = res.error || errorMessage;
-        } catch (e) {
-          // ignore parsing error
-        }
-        setError(errorMessage);
+          xhr.onload = () => {
+            if (xhr.status === 200) {
+              resolve(true);
+            } else {
+              let errorMessage = `Upload failed (${xhr.status})`;
+              try {
+                const resp = JSON.parse(xhr.responseText);
+                errorMessage = resp.error || errorMessage;
+              } catch (e) {}
+              reject(new Error(errorMessage));
+            }
+          };
+
+          xhr.onerror = () => reject(new Error(t.errorNetwork));
+          xhr.send(formData);
+        });
+      } catch (err: any) {
+        setError(err.message || t.errorGeneric);
         setScreen("preview");
+        return;
       }
-    };
+    }
 
-    xhr.onerror = () => {
-      setError(t.errorNetwork);
-      setScreen("preview");
-    };
-
-    xhr.send(formData);
-  }, [file]);
+    setUploadProgress(100);
+    setScreen("success");
+  };
 
   // --- Reset for a new photo ----------------------------
   const handleReset = useCallback(() => {
     if (previewUrl) {
       URL.revokeObjectURL(previewUrl);
     }
-    setFile(null);
+    setFiles([]);
     setPreviewUrl(null);
     setError(null);
     setScreen("idle");
@@ -220,6 +297,21 @@ export default function Home() {
   return (
     <main className="relative flex flex-1 flex-col items-center justify-center px-5 py-10">
       <Petals />
+
+      {/* Processing Overlay */}
+      {isProcessing && (
+        <div className="fixed inset-0 z-[100] flex flex-col items-center justify-center bg-white/80 backdrop-blur-sm animate-fade-in">
+          <div className="card-glass p-8 flex flex-col items-center shadow-2xl scale-110">
+            <Loader2 className="w-12 h-12 animate-spin mb-4 text-blue-600" />
+            <p className="text-xl font-medium text-blue-900 italic" style={{ fontFamily: "var(--font-cormorant)" }}>
+              {lang === 'ar' ? 'جاري تحسين الصور...' : (lang === 'fr' ? 'Optimisation des photos...' : 'Optimizing photos...')}
+            </p>
+            <p className="text-xs text-blue-400 mt-2 tracking-widest uppercase">
+              {lang === 'ar' ? 'يرجى الانتظار' : (lang === 'fr' ? 'Veuillez patienter' : 'Please wait')}
+            </p>
+          </div>
+        </div>
+      )}
 
       {/* Language Toggle */}
       <div className="absolute top-4 right-4 z-50 flex gap-2">
@@ -298,6 +390,7 @@ export default function Home() {
                     type="file"
                     accept="image/*"
                     capture="environment"
+                    multiple
                     onChange={handleFileChange}
                     className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
                     style={{ fontSize: "200px" }}
@@ -314,6 +407,7 @@ export default function Home() {
                     id="gallery-input"
                     type="file"
                     accept="image/*"
+                    multiple
                     onChange={handleFileChange}
                     className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
                     style={{ fontSize: "200px" }}
@@ -331,13 +425,21 @@ export default function Home() {
         {/* --- PREVIEW SCREEN ---------------------------- */}
         {screen === "preview" && previewUrl && (
           <div className="flex flex-col items-center text-center animate-fade-in-up">
-            <div className="card-glass p-3 mb-6 w-full">
-              <img
-                src={previewUrl}
-                alt="Photo preview"
-                className="w-full rounded-xl object-cover"
-                style={{ maxHeight: "45vh" }}
-              />
+            <div className="relative group animate-scale-in">
+              {previewUrl && (
+                <div className="relative">
+                  <img
+                    src={previewUrl}
+                    alt="Preview"
+                    className="w-full aspect-[4/5] object-cover rounded-3xl shadow-2xl border-4 border-white"
+                  />
+                  {files.length > 1 && (
+                    <div className="absolute top-4 right-4 bg-blue-600 text-white px-3 py-1 rounded-full text-xs font-bold shadow-lg">
+                      +{files.length - 1} {lang === 'ar' ? 'صور أخرى' : (lang === 'fr' ? 'autres' : 'more')}
+                    </div>
+                  )}
+                </div>
+              )}
             </div>
 
             {error && (
@@ -374,12 +476,19 @@ export default function Home() {
                 className="w-10 h-10 animate-spin mb-4"
                 style={{ color: "#5b8ba8" }}
               />
-              <p
-                className="text-2xl font-light mb-4"
-                style={{ fontFamily: "var(--font-cormorant)", color: "#2c4a6e" }}
-              >
-                {uploadProgress >= 90 ? t.savingDrive : t.uploading}
-              </p>
+              <div className="flex flex-col items-center gap-2 mb-6">
+                <p className="text-sm font-bold text-blue-600 uppercase tracking-widest">
+                  {lang === 'ar' ? `جاري إرسال ${currentUploadIndex + 1} من ${files.length}` : 
+                   lang === 'fr' ? `Envoi de ${currentUploadIndex + 1} sur ${files.length}` : 
+                   `Uploading ${currentUploadIndex + 1} of ${files.length}`}
+                </p>
+                <p
+                  className="text-2xl font-light italic"
+                  style={{ fontFamily: "var(--font-cormorant)", color: "#2c4a6e" }}
+                >
+                  {uploadProgress >= 98 ? t.thankYou : t.uploading}
+                </p>
+              </div>
               
               {/* Progress Bar Container */}
               <div className="w-full rounded-full h-3 mb-2 overflow-hidden relative" style={{ background: "#dae8f0" }}>
